@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BITSAT College Predictor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        h1 {
+            font-size: 2em;
+            color: #333;
+        }
+
+        input {
+            padding: 10px;
+            width: 80%;
+            margin: 10px 0;
+            font-size: 1em;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>BITSAT College Predictor</h1>
+        <p>Enter your BITSAT Marks to find eligible colleges.</p>
+
+        <input type="number" id="rankInput" placeholder="Enter your BITSAT Marks" />
+        <button onclick="predictColleges()">Predict Colleges</button>
+    </div>
+
+    <script>
+        function predictColleges() {
+            const userRank = parseInt(document.getElementById('rankInput').value);
+
+            if (isNaN(userRank) || userRank <= 0) {
+                alert("Please enter a valid rank.");
+                return;
+            }
+
+            // Store the rank in the sessionStorage
+            sessionStorage.setItem('userRank', userRank);
+
+            // Redirect to results page
+            window.location.href = 'results.html';
+        }
+    </script>
+</body>
+</html>
