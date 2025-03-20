@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BITSAT College Results</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.16.0/pdf-lib.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -39,7 +36,6 @@
             margin-top: 20px;
             border-collapse: collapse;
             border: 1px solid #ddd;
-            position: relative;
         }
 
         th, td {
@@ -61,20 +57,6 @@
             background-color: #f1f1f1;
         }
 
-        /* Watermark styling */
-        .watermark {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url('image.png'); /* Use the correct path here */
-            background-size: contain;
-            background-repeat: no-repeat;
-            opacity: 0.1; /* Adjust opacity to make it faint */
-            z-index: -1; /* Make sure it stays behind the table content */
-        }
-
         #downloadBtn {
             margin-top: 20px;
             padding: 10px 20px;
@@ -84,6 +66,8 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 1.2em;
+            text-decoration: none;
+            display: inline-block;
         }
 
         #downloadBtn:hover {
@@ -96,26 +80,23 @@
         <h1>BITSAT College Results</h1>
         <p>Here are the colleges you can apply for based on your BITSAT Marks:</p>
 
-        <div style="position: relative;">
-            <!-- Watermark -->
-            <div class="watermark"></div>
-
-            <!-- Table with college data -->
-            <table id="collegeTable">
-                <thead>
-                    <tr>
-                        <th>Campus Name</th>
-                        <th>Branch Name</th>
-                        <th>Cut-off Marks</th>
-                    </tr>
-                </thead>
-                <tbody id="collegeList"></tbody>
-            </table>
-        </div>
+        <table id="collegeTable">
+            <thead>
+                <tr>
+                    <th>Campus Name</th>
+                    <th>Branch Name</th>
+                    <th>Cut-off Marks</th>
+                </tr>
+            </thead>
+            <tbody id="collegeList"></tbody>
+        </table>
 
         <p id="noCollegesMessage" style="display:none;">No colleges available for your marks.</p>
 
-        <button id="downloadBtn" onclick="downloadPDF()">Download PDF</button>
+        <h2>Download The PDF To views More Colleges</h2>
+
+        <!-- Download Button -->
+        <a id="downloadBtn" href="ALL_INDIA_College_Predictor (7).pdf" download>Download PDF</a>
     </div>
 
     <script>
@@ -165,7 +146,6 @@
         ];
 
         function displayResults() {
-            // Get the rank from sessionStorage
             const userRank = parseInt(sessionStorage.getItem('userRank'));
 
             if (isNaN(userRank) || userRank <= 0) {
@@ -173,20 +153,19 @@
                 return;
             }
 
-            // Filter colleges based on rank
-            const eligibleColleges = collegesData.filter(college => userRank >= college.cutoff);
+            // Filter and limit to 10 results
+            const eligibleColleges = collegesData.filter(college => userRank >= college.cutoff).slice(0, 10);
 
-            // Get the result element and clear previous results
             const resultElement = document.getElementById('collegeList');
             const tableElement = document.getElementById('collegeTable');
             const noCollegesMessage = document.getElementById('noCollegesMessage');
-            
+
             resultElement.innerHTML = '';
 
-            // Show or hide the table depending on results
             if (eligibleColleges.length > 0) {
                 tableElement.style.display = 'table';
                 noCollegesMessage.style.display = 'none';
+
                 eligibleColleges.forEach(college => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
@@ -202,67 +181,7 @@
             }
         }
 
-        // Call displayResults when the page loads
         window.onload = displayResults;
-
-        async function downloadPDF() {
-            try {
-                const pdfResponse = await fetch("JEE Mains College Predictor PDF.pdf");
-                if (!pdfResponse.ok) throw new Error("PDF template file not found");
-
-                const existingPdfBytes = await pdfResponse.arrayBuffer();
-                const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
-
-                const pageCount = pdfDoc.getPageCount();
-                const pageIndicesToKeep = [0, pageCount - 1];
-                const pagesToRemove = Array.from({ length: pageCount }, (_, i) => i)
-                    .filter(i => !pageIndicesToKeep.includes(i));
-                pagesToRemove.reverse().forEach(index => pdfDoc.removePage(index));
-
-                const entriesPerPage = 15;
-                const rows = Array.from(document.querySelectorAll("#collegeTable tbody tr")).map(row =>
-                    Array.from(row.querySelectorAll("td")).map(td => td.innerText)
-                );
-
-                if (rows.length === 0) {
-                    alert("No data available to generate PDF.");
-                    return;
-                }
-
-                const { jsPDF } = window.jspdf;
-                const outputPages = [];
-                for (let i = 0; i < rows.length; i += entriesPerPage) {
-                    const tempDoc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
-                    tempDoc.setFontSize(14);
-                    tempDoc.text("College Prediction Results", 40, 50);
-
-                    tempDoc.autoTable({
-                        startY: 80,
-                        head: [["Campus Name", "Branch Name", "Cutoff Marks"]],
-                        body: rows.slice(i, i + entriesPerPage),
-                        theme: "grid",
-                        margin: { left: 40, right: 40 }
-                    });
-
-                    const pdfBytes = await tempDoc.output("arraybuffer");
-                    const newPdf = await PDFLib.PDFDocument.load(pdfBytes);
-                    const [insertedPage] = await pdfDoc.copyPages(newPdf, [0]);
-                    outputPages.push(insertedPage);
-                }
-
-                outputPages.forEach((page, index) => pdfDoc.insertPage(1 + index, page));
-
-                const finalPdfBytes = await pdfDoc.save();
-                const blob = new Blob([finalPdfBytes], { type: "application/pdf" });
-                const link = document.createElement("a");
-                link.href = URL.createObjectURL(blob);
-                link.download = "ALL_INDIA_College_Predictor.pdf";
-                link.click();
-            } catch (error) {
-                alert("Failed to generate PDF: " + error.message);
-                console.error(error);
-            }
-        }
     </script>
 </body>
 </html>
